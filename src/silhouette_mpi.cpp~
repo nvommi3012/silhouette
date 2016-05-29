@@ -69,13 +69,15 @@ void parseTxtFile (string ffile, string lfile, int rows, int cols, int nol, doub
 /*			    DISSIMILARITY WITHIN CLUSTER					    */
 /*--------------------------------------------------------------------------------------------------*/
 
-doubleMatrix average_dissimilarity_withincluster(doubleMatrix ip_matrix)
+doubleMatrix average_dissimilarity_withincluster(doubleMatrix ip_matrix, int np, int rank)
 {
 	doubleMatrix op_matrix;
+	doubleMatrix op_matrix_local;
 	doubleMatrix temp;
-	temp.resize(ip_matrix.rows(), ip_matrix.rows());
+	temp.resize(ip_matrix.rows()/np, ip_matrix.rows()/np);
 	int i, j;
-	for (i = 0; i < (int)ip_matrix.rows(); i++)
+	
+	for (i = rank*((int)ip_matrix.rows()/np); i < (rank*((int)ip_matrix.rows()/np)) + ((int)ip_matrix.rows()/np); i++)
 	{
 		for (j = 0; j < (int)ip_matrix.rows(); j++)
 		{
@@ -83,24 +85,32 @@ doubleMatrix average_dissimilarity_withincluster(doubleMatrix ip_matrix)
 		}
 	}
 	op_matrix.resize(ip_matrix.rows(), 1);
-	op_matrix = temp.rowwise().sum()/(double)(temp.rows() - 1);
+	op_matrix_local.resize(ip_matrix.rows()/np, 1);
+	op_matrix_local = temp.rowwise().sum()/(double)(temp.rows() - 1);
 
 	//cout << op_matrix << endl << endl;
-
+	
+	int u = (rank)*((int)ip_matrix.rows()/np);
+    	MPI_Gather(op_matrix_local.data(), ip_matrix.rows()/np, MPI_DOUBLE, op_matrix.data(), ip_matrix.rows()/np, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	
+	if (rank == 0)
+	{	
+	//cout << op_matrix << endl << endl;
 	return(op_matrix);
+	}
 }
 
 /*--------------------------------------------------------------------------------------------------*/
 /*			    DISSIMILARITY BETWEEN 2 DIFF CLUSTERS				    */
 /*--------------------------------------------------------------------------------------------------*/
 
-doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMatrix other_matrix)
+doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMatrix other_matrix, int np,int rank)
 {
 	doubleMatrix op_matrix;
 	doubleMatrix temp;
 	temp.resize(ip_matrix.rows(), other_matrix.rows());
 	int i, j;
-	for (i = 0; i < (int)ip_matrix.rows(); i++)
+	for (i = rank*((int)ip_matrix.rows()/np); i < (rank*((int)ip_matrix.rows()/np)) + ((int)ip_matrix.rows()/np); i++)
 	{
 		for (j = 0; j < (int)other_matrix.rows(); j++)
 		{
@@ -108,11 +118,19 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 		}
 	}
 	op_matrix.resize(ip_matrix.rows(), 1);
-	op_matrix = temp.rowwise().mean();
-	
-	//cout << op_matrix << endl << endl;
+	op_matrix_local.resize(ip_matrix.rows()/np, 1);
+	op_matrix_local = temp.rowwise().mean();
 
+	int u = (rank)*((int)ip_matrix.rows()/np);
+    	MPI_Gather(op_matrix_local.data(), ip_matrix.rows()/np, MPI_DOUBLE, op_matrix.data(), ip_matrix.rows()/np, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	
+		
+	if (rank == 0)
+	{	
+	//cout << op_matrix << endl << endl;
 	return(op_matrix);
+	}
+	
 }
 
 
@@ -121,7 +139,7 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 /*--------------------------------------------------------------------------------------------------*/
 
 
-int main()
+int main(int argc, char* argv[])
 {
 	int rank = 0;
    	int np = 0;
@@ -147,7 +165,7 @@ int main()
 	
 	parseTxtFile(dataFile, labelFile, rows, cols, nol, &inputData, &dataSizes);
 
-	cout << inputData << endl << endl;
+	//cout << inputData << endl << endl;
 
 	std::vector<int> intervals;
 	intervals.push_back(1);
@@ -182,14 +200,14 @@ int main()
 		{
 			a.resize(temp.rows(), 1);
 			t.resize(temp.rows(), 1);
-			a = average_dissimilarity_withincluster(temp);
+			a = average_dissimilarity_withincluster(temp,np,rank);
 			t = a;
 		}
 		else
 		{
 			a.resize(a.rows() + temp.rows(), 1);
 			t1.resize(temp.rows(), 1);
-			t1 = average_dissimilarity_withincluster(temp);
+			t1 = average_dissimilarity_withincluster(temp,np,rank);
 			a << t,
 				t1;
 			t.resize(a.rows() + temp.rows(), 1);
@@ -227,21 +245,21 @@ int main()
 			{
 				adtc.resize(temp1.rows(), 1);
 				t2.resize(temp1.rows(), 1);
-				adtc = average_dissimilarity_twoclusters(temp1, temp2);
+				adtc = average_dissimilarity_twoclusters(temp1, temp2, np,rank);
 				t2 = adtc;				
 			}
 			else if (j == 2 && ctr == 1)
 			{
 				adtc.resize(temp1.rows(), 1);
 				t2.resize(temp1.rows(), 1);
-				adtc = average_dissimilarity_twoclusters(temp1, temp2);
+				adtc = average_dissimilarity_twoclusters(temp1, temp2, np,rank);
 				t2 = adtc;
 			}
 			else
 			{
 				adtc.resize(adtc.rows(), adtc.cols() + 1);
 				t3.resize(temp1.rows(), 1);
-				t3 = average_dissimilarity_twoclusters(temp1, temp2);
+				t3 = average_dissimilarity_twoclusters(temp1, temp2, np,rank);
 				adtc << t2, t3;
 				t2.resize(adtc.rows(), adtc.cols() + 1);
 				t2 = adtc;
@@ -273,12 +291,12 @@ int main()
 	c.resize(X.rows(), 2);
 	SIL.resize(X.rows(), 1);
 	c << a, b;
-	SIL = (b-a).array()/(c.rowwise().maxCoeff()).array();
-
-	cout << SIL << endl;
-	
-	time = stopwatch_stop (timer);
-	printf("\ntime for implementation: %Lg seconds\n", time);
-
+	if (rank == 0)
+	{
+		SIL = (b-a).array()/(c.rowwise().maxCoeff()).array();
+		cout << SIL << endl;
+		time = stopwatch_stop (timer);
+		printf("\ntime for implementation: %Lg seconds\n", time);
+	}
 	return 0;
 }
