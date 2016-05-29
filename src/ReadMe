@@ -1,0 +1,20 @@
+To compile openmp -
+
+g++ silhouette_omp.cpp -o silhouette_omp -fopenmp
+
+To run
+./silhouette_omp
+
+To compile mpi -
+
+use "make"
+
+To run
+./silhouette_mpi
+
+To compile Sequential
+
+g++ silhouette_seq.cpp -o silhouette_seq
+
+To run
+./silhouette_seq
