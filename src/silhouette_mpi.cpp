@@ -121,7 +121,7 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 /*--------------------------------------------------------------------------------------------------*/
 
 
-int main(&argc, &argv)
+int main(int argc, char* argv[])
 {
 	int rank = 0;
    	int np = 0;
