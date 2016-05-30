@@ -117,7 +117,7 @@ int main()
 	
 	parseTxtFile(dataFile, labelFile, rows, cols, nol, &inputData, &dataSizes);
 
-	cout << inputData << endl << endl;
+	//cout << inputData << endl << endl;
 
 	std::vector<int> intervals;
 	intervals.push_back(1);
@@ -136,6 +136,8 @@ int main()
 	// {
 	// 	cout << intervals[x] << endl;
 	// }
+
+	stopwatch_start (timer);
 
 	doubleMatrix X;
 	X.resize(inputData.rows(), inputData.cols());
@@ -167,8 +169,7 @@ int main()
 	}
 
 	//cout << a << endl;
-	
-	stopwatch_start (timer);	
+		
 	
 	doubleMatrix adtc;
 	doubleMatrix b;

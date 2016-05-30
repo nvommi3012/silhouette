@@ -125,7 +125,7 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 
 int main()
 {
-	omp_set_num_threads(8);	
+	omp_set_num_threads(4);	
 	
 	stopwatch_init ();
   	struct stopwatch_t* timer = stopwatch_create ();

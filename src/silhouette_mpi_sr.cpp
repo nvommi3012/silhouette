@@ -172,6 +172,7 @@ int main(int argc, char* argv[])
 	doubleMatrix X;
 	X.resize(inputData.rows(), inputData.cols());
 	X = inputData.cast<double>();
+
 	doubleMatrix temp;
 	doubleMatrix t;
 	doubleMatrix t1;
@@ -210,7 +211,7 @@ int main(int argc, char* argv[])
 
 	if(rank > 0)
 	{
-		/*Send the size of the packet and data*/
+		//Send the size of the packet and data
 		size_local[0] = a_local.size();
 		MPI_Send(&size_local,1, MPI_INT, 0, 1 , MPI_COMM_WORLD);
 		MPI_Send(a_local.data(),a_local.size(), MPI_DOUBLE, 0, 0 , MPI_COMM_WORLD);
@@ -218,7 +219,7 @@ int main(int argc, char* argv[])
 
 	if(rank == 0)
 	{
-		/*receive the packet size - offset the pointer - receive the data*/
+		//receive the packet size - offset the pointer - receive the data//
 		MPI_Recv(&size[0], 1, MPI_INT, 1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		MPI_Recv(&size[1], 1, MPI_INT, 2, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		MPI_Recv(&size[2], 1, MPI_INT, 3, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -231,13 +232,23 @@ int main(int argc, char* argv[])
 	
 	doubleMatrix adtc;
 	doubleMatrix b;
+	b.resize(100,1);
+	doubleMatrix b_local;
 	doubleMatrix temp1;
 	doubleMatrix temp2;
 	doubleMatrix t2;
 	doubleMatrix t3;
 	doubleMatrix t4;
 	doubleMatrix t5;
-	for (int i = 0; i < intervals.size(); i = i + 2)
+	int b_size_local[1];
+	int b_size[np-1];
+
+	if (rank > 0)
+	{
+	
+	int offset = (rank-1) * (intervals.size()/(np-1));
+	int pkt_size = intervals.size()/(np-1);
+	for (int i = offset; i < offset + pkt_size; i = i + 2)
 	{
 		int ctr = 0;
 		for (int j = 0; j < intervals.size(); j = j + 2)
@@ -275,25 +286,54 @@ int main(int argc, char* argv[])
 				t2 = adtc;
 			}
 		}
-		if (i == 0)
+		if (i == offset)
 		{
-			b.resize(adtc.rows(), 1);
+			b_local.resize(adtc.rows(), 1);
 			t4.resize(adtc.rows(), 1);
-			b = adtc.rowwise().minCoeff();
-			t4 = b;
+			b_local = adtc.rowwise().minCoeff();
+			t4 = b_local;
 		}
 		else
 		{
-			b.resize(b.rows() + adtc.rows(), 1);
+			b_local.resize(b.rows() + adtc.rows(), 1);
 			t5.resize(adtc.rows(), 1);
 			t5 = adtc.rowwise().minCoeff();
-			b << t4,t5;
-			t4.resize(b.rows() + adtc.rows(), 1);
-			t4 = b;
+			b_local << t4,t5;
+			t4.resize(b_local.rows() + adtc.rows(), 1);
+			t4 = b_local;
 		}
 	}
+	
+	} //end of if loop
 
-	//cout << b << endl << endl;
+
+
+	if(rank > 0)
+	{
+		//Send the size of the packet and data
+		b_size_local[0] = b_local.size();
+		MPI_Send(&b_size_local,1, MPI_INT, 0, 3 , MPI_COMM_WORLD);
+		MPI_Send(b_local.data(),b_local.size(), MPI_DOUBLE, 0, 2 , MPI_COMM_WORLD);
+	}
+
+	if(rank == 0)
+	{
+		//receive the packet size - offset the pointer - receive the data//
+		MPI_Recv(&b_size[0], 1, MPI_INT, 1, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&b_size[1], 1, MPI_INT, 2, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&b_size[2], 1, MPI_INT, 3, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+		MPI_Recv(b.data(), b_size[0], MPI_DOUBLE, 1, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&b.data()[b_size[0]], b_size[1], MPI_DOUBLE, 2, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&b.data()[b_size[0]+b_size[1]], b_size[2], MPI_DOUBLE, 3, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
+
+
+
+
+	//if (rank == 0)
+		//cout << b << endl << endl;
+
 	if (rank == 0)
 	{
 		doubleMatrix SIL;
