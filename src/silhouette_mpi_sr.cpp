@@ -8,7 +8,7 @@
 #include <vector>
 #include "math.h"
 #include <mpi.h>
-
+#include <omp.h>
 #include "timer.c"
 
 using namespace std;
@@ -75,6 +75,7 @@ doubleMatrix average_dissimilarity_withincluster(doubleMatrix ip_matrix)
 	doubleMatrix temp;
 	temp.resize(ip_matrix.rows(), ip_matrix.rows());
 	int i, j;
+	//#pragma omp parallel for private(i,j) shared (temp,ip_matrix)
 	for (i = 0; i < (int)ip_matrix.rows(); i++)
 	{
 		for (j = 0; j < (int)ip_matrix.rows(); j++)
@@ -100,6 +101,7 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 	doubleMatrix temp;
 	temp.resize(ip_matrix.rows(), other_matrix.rows());
 	int i, j;
+	//#pragma omp parallel for private(i,j) shared (temp,ip_matrix)
 	for (i = 0; i < (int)ip_matrix.rows(); i++)
 	{
 		for (j = 0; j < (int)other_matrix.rows(); j++)
@@ -123,6 +125,7 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 
 int main(int argc, char* argv[])
 {
+	//omp_set_num_threads(4);
 	int rank = 0;
    	int np = 0;
    	char hostname[MPI_MAX_PROCESSOR_NAME+1];
@@ -139,7 +142,7 @@ int main(int argc, char* argv[])
  	assert (timer);
 	long double time = 0;
 
-	int rows = 100, cols = 9, nol = 3;
+	int rows = 10000, cols = 100, nol = 3;
 	string dataFile = "temp.txt";
 	string labelFile = "label.txt";	
 	vector<int> dataSizes;
@@ -148,7 +151,7 @@ int main(int argc, char* argv[])
 	parseTxtFile(dataFile, labelFile, rows, cols, nol, &inputData, &dataSizes);
 
 	//cout << inputData << endl << endl;
-
+	cout << "File Read Done" << endl;
 	std::vector<int> intervals;
 	intervals.push_back(1);
 	int var = 0;
@@ -178,9 +181,11 @@ int main(int argc, char* argv[])
 	doubleMatrix t1;
 	doubleMatrix a_local;
 	doubleMatrix a;
-	a.resize(100,1);
+	a.resize(rows,1);
 	int size_local[1];
 	int size[np-1];
+
+	//cout << intervals.size() << endl;
 
 	if(rank > 0)
 	{
@@ -227,12 +232,14 @@ int main(int argc, char* argv[])
 		MPI_Recv(a.data(), size[0], MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		MPI_Recv(&a.data()[size[0]], size[1], MPI_DOUBLE, 2, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		MPI_Recv(&a.data()[size[0]+size[1]], size[2], MPI_DOUBLE, 3, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		cout << "a done" << endl;
 	}	
-
+	
+	
 	
 	doubleMatrix adtc;
 	doubleMatrix b;
-	b.resize(100,1);
+	b.resize(X.rows(),1);
 	doubleMatrix b_local;
 	doubleMatrix temp1;
 	doubleMatrix temp2;
@@ -245,11 +252,11 @@ int main(int argc, char* argv[])
 
 	if (rank > 0)
 	{
-	
 	int offset = (rank-1) * (intervals.size()/(np-1));
 	int pkt_size = intervals.size()/(np-1);
 	for (int i = offset; i < offset + pkt_size; i = i + 2)
 	{
+		
 		int ctr = 0;
 		for (int j = 0; j < intervals.size(); j = j + 2)
 		{
@@ -258,10 +265,15 @@ int main(int argc, char* argv[])
 				ctr = 1;
 				continue;
 			}
+				
 			temp1.resize(((intervals[i + 1] - intervals[i]) + 1), X.cols());
 			temp2.resize(((intervals[j + 1] - intervals[j]) + 1), X.cols());
+			//cout << rank << endl;			
 			temp1 = X.block((intervals[i] - 1), 0, ((intervals[i + 1] - intervals[i]) + 1), X.cols());
+			//cout << rank << endl;
 			temp2 = X.block((intervals[j] - 1), 0, ((intervals[j + 1] - intervals[j]) + 1), X.cols());
+			//cout << rank << endl;		
+		
 			if (j == 0)
 			{
 				adtc.resize(temp1.rows(), 1);
@@ -286,6 +298,7 @@ int main(int argc, char* argv[])
 				t2 = adtc;
 			}
 		}
+		
 		if (i == offset)
 		{
 			b_local.resize(adtc.rows(), 1);
@@ -306,10 +319,12 @@ int main(int argc, char* argv[])
 	
 	} //end of if loop
 
-
+	//if (rank == 1)
+	//	cout << b_local <<endl;
 
 	if(rank > 0)
 	{
+		//cout << b_local.size() << endl;
 		//Send the size of the packet and data
 		b_size_local[0] = b_local.size();
 		MPI_Send(&b_size_local,1, MPI_INT, 0, 3 , MPI_COMM_WORLD);
@@ -326,11 +341,12 @@ int main(int argc, char* argv[])
 		MPI_Recv(b.data(), b_size[0], MPI_DOUBLE, 1, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		MPI_Recv(&b.data()[b_size[0]], b_size[1], MPI_DOUBLE, 2, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		MPI_Recv(&b.data()[b_size[0]+b_size[1]], b_size[2], MPI_DOUBLE, 3, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		cout << "b done" << endl;
 	}
 
 
 
-
+	
 	//if (rank == 0)
 		//cout << b << endl << endl;
 
@@ -340,11 +356,13 @@ int main(int argc, char* argv[])
 		doubleMatrix c;
 		c.resize(X.rows(), 2);
 		SIL.resize(X.rows(), 1);
+		//cout << a << endl ;
 		c << a, b;
 		SIL = (b-a).array()/(c.rowwise().maxCoeff()).array();
 		cout << SIL << endl;
 		time = stopwatch_stop (timer);
 		printf("\ntime for implementation: %Lg seconds\n", time);
 	}
+	MPI_Finalize();
 	return 0;
 }

@@ -125,14 +125,14 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 
 int main()
 {
-	omp_set_num_threads(4);	
+	omp_set_num_threads(8);	
 	
 	stopwatch_init ();
   	struct stopwatch_t* timer = stopwatch_create ();
  	assert (timer);
 	long double time = 0;
 
-	int rows = 100, cols = 9, nol = 3;
+	int rows = 10000, cols = 100, nol = 3;
 	string dataFile = "temp.txt";
 	string labelFile = "label.txt";	
 	vector<int> dataSizes;
@@ -140,7 +140,7 @@ int main()
 	
 	parseTxtFile(dataFile, labelFile, rows, cols, nol, &inputData, &dataSizes);
 
-	cout << inputData << endl << endl;
+	//cout << inputData << endl << endl;
 
 	std::vector<int> intervals;
 	intervals.push_back(1);

@@ -109,9 +109,9 @@ int main()
  	assert (timer);
 	long double time = 0;
 	
-	int rows = 100, cols = 9, nol = 3;
-	string dataFile = "temp.txt";
-	string labelFile = "label.txt";	
+	int rows = 300, cols = 100, nol = 3;
+	string dataFile = "temp.txt.300.100";
+	string labelFile = "label.txt.300.100";	
 	vector<int> dataSizes;
 	doubleMatrix inputData(rows, cols);
 	
