@@ -76,6 +76,7 @@ doubleMatrix average_dissimilarity_withincluster(doubleMatrix ip_matrix, int np,
 	doubleMatrix temp;
 	temp.resize(ip_matrix.rows()/np, ip_matrix.rows()/np);
 	int i, j;
+	double root_matrix[20][1];
 	
 	for (i = rank*((int)ip_matrix.rows()/np); i < (rank*((int)ip_matrix.rows()/np)) + ((int)ip_matrix.rows()/np); i++)
 	{
@@ -89,14 +90,15 @@ doubleMatrix average_dissimilarity_withincluster(doubleMatrix ip_matrix, int np,
 	op_matrix_local = temp.rowwise().sum()/(double)(temp.rows() - 1);
 
 	//cout << op_matrix << endl << endl;
-	
+	cout << op_matrix_local.rows() << endl;
+	cout << op_matrix_local.cols() << endl;
 	int u = (rank)*((int)ip_matrix.rows()/np);
-    	MPI_Gather(op_matrix_local.data(), ip_matrix.rows()/np, MPI_DOUBLE, op_matrix.data(), ip_matrix.rows()/np, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    	MPI_Gather(op_matrix_local.data(), ip_matrix.rows()/np, MPI_DOUBLE, &root_matrix(u,0), ip_matrix.rows()/np, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	
 	if (rank == 0)
 	{	
-	//cout << op_matrix << endl << endl;
-	return(op_matrix);
+	cout << root_matrix[19][0] << endl << endl;
+	//return(op_matrix);
 	}
 }
 
@@ -107,6 +109,7 @@ doubleMatrix average_dissimilarity_withincluster(doubleMatrix ip_matrix, int np,
 doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMatrix other_matrix, int np,int rank)
 {
 	doubleMatrix op_matrix;
+	doubleMatrix op_matrix_local;
 	doubleMatrix temp;
 	temp.resize(ip_matrix.rows(), other_matrix.rows());
 	int i, j;

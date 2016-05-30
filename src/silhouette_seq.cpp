@@ -160,8 +160,7 @@ int main()
 			a.resize(a.rows() + temp.rows(), 1);
 			t1.resize(temp.rows(), 1);
 			t1 = average_dissimilarity_withincluster(temp);
-			a << t,
-				t1;
+			a << t,t1;
 			t.resize(a.rows() + temp.rows(), 1);
 			t = a;
 		}

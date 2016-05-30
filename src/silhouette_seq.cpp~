@@ -109,7 +109,7 @@ int main()
  	assert (timer);
 	long double time = 0;
 	
-	int rows = 8, cols = 4, nol = 3;
+	int rows = 100, cols = 9, nol = 3;
 	string dataFile = "temp.txt";
 	string labelFile = "label.txt";	
 	vector<int> dataSizes;
