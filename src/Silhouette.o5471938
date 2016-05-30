@@ -1,0 +1,130 @@
+Hello, world! [Host:compute-10-6.local -- Rank 2 out of 4]
+Hello, world! [Host:compute-10-6.local -- Rank 1 out of 4]
+Hello, world! [Host:compute-10-6.local -- Rank 3 out of 4]
+Hello, world! [Host:compute-10-6.local -- Rank 0 out of 4]
+  0.185212
+  0.276696
+  0.183581
+  0.193773
+   0.27781
+   0.37148
+  0.379399
+  0.344303
+  0.164786
+  0.331955
+  0.281777
+  0.200214
+  0.363226
+  0.312721
+  0.194346
+  0.118751
+  0.298451
+-0.0272537
+  0.316111
+  0.379941
+  0.350092
+  0.474261
+  0.344036
+  0.423552
+  0.415494
+  0.317253
+  0.495117
+  0.378734
+  0.238908
+  0.213124
+   0.34754
+  0.478317
+  0.247092
+  0.397271
+  0.279567
+  0.200345
+  0.438835
+  0.327955
+  0.328144
+   0.41438
+  0.279536
+ 0.0362094
+  0.235872
+  0.326306
+  0.478169
+ 0.0998111
+  0.350382
+  0.098861
+  0.408684
+  0.305978
+  0.403403
+   0.49759
+  0.457584
+  0.035752
+  0.220618
+  0.445846
+   0.11981
+  0.355826
+  0.203661
+  0.396902
+  0.163854
+  0.355207
+  0.388479
+  0.478539
+  0.422896
+  0.241276
+  0.299961
+  0.331877
+  0.227231
+  0.503555
+  0.346074
+  0.153959
+  0.144385
+  0.314863
+  0.463578
+  0.331328
+  0.344271
+  0.461272
+  0.384212
+  0.292243
+  0.430859
+  0.104529
+  0.214888
+  0.419975
+  0.391338
+  0.442993
+  0.269409
+  0.424069
+   0.29268
+  0.183107
+ 0.0948657
+  0.422236
+  0.298446
+  0.149472
+  0.197803
+   0.34145
+  0.355657
+  0.302123
+  0.190214
+ 0.0278718
+
+time for implementation: 0.000989 seconds
+--------------------------------------------------------------------------
+mpirun has exited due to process rank 1 with PID 29569 on
+node compute-10-6 exiting improperly. There are three reasons this could occur:
+
+1. this process did not call "init" before exiting, but others in
+the job did. This can cause a job to hang indefinitely while it waits
+for all processes to call "init". By rule, if one process calls "init",
+then ALL processes must call "init" prior to termination.
+
+2. this process called "init", but exited without calling "finalize".
+By rule, all processes that call "init" MUST call "finalize" prior to
+exiting or it will be considered an "abnormal termination"
+
+3. this process called "MPI_Abort" or "orte_abort" and the mca parameter
+orte_create_session_dirs is set to false. In this case, the run-time cannot
+detect that the abort call was an abnormal termination. Hence, the only
+error message you will receive is this one.
+
+This may have caused other processes in the application to be
+terminated by signals sent by mpirun (as reported here).
+
+You can avoid this message by specifying -quiet on the mpirun command line.
+
+--------------------------------------------------------------------------
