@@ -109,15 +109,17 @@ int main()
  	assert (timer);
 	long double time = 0;
 	
-	int rows = 200, cols = 100, nol = 3;
-	string dataFile = "temp.txt.200.100";
-	string labelFile = "label.txt.200.100";	
+	int rows = 10000, cols = 100, nol = 3;
+	string dataFile = "temp.txt";
+	string labelFile = "label.txt";	
 	vector<int> dataSizes;
 	doubleMatrix inputData(rows, cols);
 	
 	parseTxtFile(dataFile, labelFile, rows, cols, nol, &inputData, &dataSizes);
 
 	//cout << inputData << endl << endl;
+	
+	cout << "File Read Complete" << endl;	
 
 	std::vector<int> intervals;
 	intervals.push_back(1);
@@ -136,6 +138,8 @@ int main()
 	// {
 	// 	cout << intervals[x] << endl;
 	// }
+
+	cout << "Timer Start" << endl;	
 
 	stopwatch_start (timer);
 
@@ -229,8 +233,7 @@ int main()
 			b.resize(b.rows() + adtc.rows(), 1);
 			t5.resize(adtc.rows(), 1);
 			t5 = adtc.rowwise().minCoeff();
-			b << t4,
-				t5;
+			b << t4,t5;
 			t4.resize(b.rows() + adtc.rows(), 1);
 			t4 = b;
 		}
@@ -244,9 +247,9 @@ int main()
 	SIL.resize(X.rows(), 1);
 	c << a, b;
 	SIL = (b-a).array()/(c.rowwise().maxCoeff()).array();
-
-	cout << SIL << endl;
 	time = stopwatch_stop (timer);
 	printf("\ntime for implementation: %Lg seconds\n", time);
+	cout << "Result" << endl;
+	cout << SIL << endl;
 	return 0;
 }

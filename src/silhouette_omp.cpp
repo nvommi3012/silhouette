@@ -101,7 +101,7 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 	doubleMatrix temp;
 	temp.resize(ip_matrix.rows(), other_matrix.rows());
 	int i, j;
-	#pragma omp parallel for private(i,j) shared (temp,ip_matrix)
+	#pragma omp parallel for private(i,j) shared (temp,ip_matrix,other_matrix)
 	for (i = 0; i < (int)ip_matrix.rows(); i++)
 	{
 		for (j = 0; j < (int)other_matrix.rows(); j++)
@@ -125,7 +125,7 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 
 int main()
 {
-	omp_set_num_threads(8);	
+	omp_set_num_threads(64);	
 	
 	stopwatch_init ();
   	struct stopwatch_t* timer = stopwatch_create ();
@@ -185,8 +185,7 @@ int main()
 			a.resize(a.rows() + temp.rows(), 1);
 			t1.resize(temp.rows(), 1);
 			t1 = average_dissimilarity_withincluster(temp);
-			a << t,
-				t1;
+			a << t,t1;
 			t.resize(a.rows() + temp.rows(), 1);
 			t = a;
 		}
@@ -268,11 +267,8 @@ int main()
 	SIL.resize(X.rows(), 1);
 	c << a, b;
 	SIL = (b-a).array()/(c.rowwise().maxCoeff()).array();
-
-	cout << SIL << endl;
-	
 	time = stopwatch_stop (timer);
 	printf("\ntime for implementation: %Lg seconds\n", time);
-
+	cout << SIL << endl;
 	return 0;
 }

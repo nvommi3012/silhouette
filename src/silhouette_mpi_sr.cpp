@@ -8,7 +8,6 @@
 #include <vector>
 #include "math.h"
 #include <mpi.h>
-#include <omp.h>
 #include "timer.c"
 
 using namespace std;
@@ -75,7 +74,6 @@ doubleMatrix average_dissimilarity_withincluster(doubleMatrix ip_matrix)
 	doubleMatrix temp;
 	temp.resize(ip_matrix.rows(), ip_matrix.rows());
 	int i, j;
-	//#pragma omp parallel for private(i,j) shared (temp,ip_matrix)
 	for (i = 0; i < (int)ip_matrix.rows(); i++)
 	{
 		for (j = 0; j < (int)ip_matrix.rows(); j++)
@@ -101,7 +99,6 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 	doubleMatrix temp;
 	temp.resize(ip_matrix.rows(), other_matrix.rows());
 	int i, j;
-	//#pragma omp parallel for private(i,j) shared (temp,ip_matrix)
 	for (i = 0; i < (int)ip_matrix.rows(); i++)
 	{
 		for (j = 0; j < (int)other_matrix.rows(); j++)
@@ -125,7 +122,12 @@ doubleMatrix average_dissimilarity_twoclusters(doubleMatrix ip_matrix, doubleMat
 
 int main(int argc, char* argv[])
 {
-	//omp_set_num_threads(4);
+
+	stopwatch_init ();
+  	struct stopwatch_t* timer = stopwatch_create ();
+ 	assert (timer);
+	long double time = 0;
+
 	int rank = 0;
    	int np = 0;
    	char hostname[MPI_MAX_PROCESSOR_NAME+1];
@@ -135,12 +137,7 @@ int main(int argc, char* argv[])
     	MPI_Comm_rank (MPI_COMM_WORLD, &rank); /* Get process id */
     	MPI_Comm_size (MPI_COMM_WORLD, &np); /* Get number of processes */
     	MPI_Get_processor_name (hostname, &namelen); /* Get hostname of node */
-    	printf ("Hello, world! [Host:%s -- Rank %d out of %d]\n", hostname, rank, np);
-	
-	stopwatch_init ();
-  	struct stopwatch_t* timer = stopwatch_create ();
- 	assert (timer);
-	long double time = 0;
+    	//printf ("Hello, world! [Host:%s -- Rank %d out of %d]\n", hostname, rank, np);
 
 	int rows = 10000, cols = 100, nol = 3;
 	string dataFile = "temp.txt";
@@ -170,7 +167,8 @@ int main(int argc, char* argv[])
 	// 	cout << intervals[x] << endl;
 	// }
 
-	stopwatch_start (timer);
+	if(rank == 0)
+		stopwatch_start (timer);
 
 	doubleMatrix X;
 	X.resize(inputData.rows(), inputData.cols());
@@ -185,7 +183,6 @@ int main(int argc, char* argv[])
 	int size_local[1];
 	int size[np-1];
 
-	//cout << intervals.size() << endl;
 
 	if(rank > 0)
 	{
@@ -267,12 +264,9 @@ int main(int argc, char* argv[])
 			}
 				
 			temp1.resize(((intervals[i + 1] - intervals[i]) + 1), X.cols());
-			temp2.resize(((intervals[j + 1] - intervals[j]) + 1), X.cols());
-			//cout << rank << endl;			
+			temp2.resize(((intervals[j + 1] - intervals[j]) + 1), X.cols());		
 			temp1 = X.block((intervals[i] - 1), 0, ((intervals[i + 1] - intervals[i]) + 1), X.cols());
-			//cout << rank << endl;
-			temp2 = X.block((intervals[j] - 1), 0, ((intervals[j + 1] - intervals[j]) + 1), X.cols());
-			//cout << rank << endl;		
+			temp2 = X.block((intervals[j] - 1), 0, ((intervals[j + 1] - intervals[j]) + 1), X.cols());		
 		
 			if (j == 0)
 			{
@@ -319,12 +313,8 @@ int main(int argc, char* argv[])
 	
 	} //end of if loop
 
-	//if (rank == 1)
-	//	cout << b_local <<endl;
-
 	if(rank > 0)
 	{
-		//cout << b_local.size() << endl;
 		//Send the size of the packet and data
 		b_size_local[0] = b_local.size();
 		MPI_Send(&b_size_local,1, MPI_INT, 0, 3 , MPI_COMM_WORLD);
@@ -345,23 +335,17 @@ int main(int argc, char* argv[])
 	}
 
 
-
-	
-	//if (rank == 0)
-		//cout << b << endl << endl;
-
 	if (rank == 0)
 	{
 		doubleMatrix SIL;
 		doubleMatrix c;
 		c.resize(X.rows(), 2);
 		SIL.resize(X.rows(), 1);
-		//cout << a << endl ;
 		c << a, b;
 		SIL = (b-a).array()/(c.rowwise().maxCoeff()).array();
-		cout << SIL << endl;
 		time = stopwatch_stop (timer);
 		printf("\ntime for implementation: %Lg seconds\n", time);
+		cout << SIL << endl;
 	}
 	MPI_Finalize();
 	return 0;

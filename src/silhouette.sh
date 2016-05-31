@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -N Silhouette
 #$ -q eecs221
-#$ -pe one-node-mpi 4
+#$ -pe mpi 32
 #$ -R y
 
 # Grid Engine Notes:
@@ -17,4 +17,4 @@ module load boost/1.57.0
 module load openmpi-1.8.3/gcc-4.9.2
 
 # Run the program 
-mpirun -np 4 ./silhouette_mpi_sr
+mpirun -np 4 -npernode 1 ./silhouette_mpi_sr
