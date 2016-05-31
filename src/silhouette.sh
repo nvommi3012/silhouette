@@ -17,4 +17,4 @@ module load boost/1.57.0
 module load openmpi-1.8.3/gcc-4.9.2
 
 # Run the program 
-mpirun -np 4 -npernode 1 ./silhouette_mpi_sr
+mpirun -quiet -np 4 -npernode 1 ./silhouette_mpi_sr
