@@ -1,20 +1,21 @@
 To compile openmp -
-
 g++ silhouette_omp.cpp -o silhouette_omp -fopenmp
 
 To run
 ./silhouette_omp
+-----------------------------------------------------------
+Multi-Node MPI
 
 To compile mpi -
-
 use "make"
 
 To run
-./silhouette_mpi
+qsub silhouette.sh
+----------------------------------------------------------
 
 To compile Sequential
-
 g++ silhouette_seq.cpp -o silhouette_seq
 
 To run
 ./silhouette_seq
+---------------------------------------------------------
